@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Video - SoftKeys</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0a0806; 
+            min-height: 100vh;
+        }
+
+        .golden-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: radial-gradient(circle at 20% 30%, #1a1208 0%, #050302 100%);
+        }
+
+        .golden-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(212, 168, 83, 0.02) 0px,
+                rgba(212, 168, 83, 0.02) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+            pointer-events: none;
+        }
+
+        .golden-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 50% 50%, rgba(212,168,83,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .video-header {
+            padding: 30px 48px;
+            background: linear-gradient(180deg, rgba(10,8,6,0.95) 0%, rgba(10,8,6,0) 100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            color: #d4a853;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: rgba(212, 168, 83, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 24px;
+            border-radius: 40px;
+            border: 1px solid rgba(212, 168, 83, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: #d4a853;
+            color: #0a0806;
+            border-color: transparent;
+        }
+
+        .hero-section {
+            height: 40vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-content h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(135deg, #d4a853 0%, #f5e6b0 50%, #d4a853 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-content p {
+            color: rgba(212, 168, 83, 0.7);
+            font-size: 1rem;
+            font-weight: 300;
+        }
+
+        .video-selection {
+            max-width: 1200px;
+            margin: -20px auto 80px;
+            padding: 0 48px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .section-title {
+            color: #d4a853;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 32px;
+            letter-spacing: -0.02em;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .section-title span {
+            color: rgba(255,255,255,0.9);
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+        }
+
+        .video-card {
+            background: rgba(10, 8, 6, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            border: 1px solid rgba(212, 168, 83, 0.2);
+            position: relative;
+        }
+
+        .video-card:hover {
+            transform: translateY(-12px);
+            border-color: rgba(212, 168, 83, 0.6);
+            box-shadow: 0 20px 40px rgba(212, 168, 83, 0.1);
+        }
+
+        .video-thumbnail {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1208, #0a0806);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-thumbnail .no-thumb {
+            color: #d4a853;
+            font-size: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .play-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(212, 168, 83, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #0a0806;
+            transition: all 0.3s;
+        }
+
+        .play-icon::before {
+            content: "▶";
+        }
+
+        .play-icon:hover {
+            transform: scale(1.1);
+            background: #d4a853;
+        }
+
+        .video-info {
+            padding: 20px;
+        }
+
+        .video-title {
+            color: #d4a853;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .video-desc {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .duration {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: rgba(212, 168, 83, 0.7);
+        }
+
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 3, 2, 0.98);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .video-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 1000px;
+        }
+
+        .modal-content video {
+            width: 100%;
+            max-height: 80vh;
+            border-radius: 16px;
+            box-shadow: 0 0 50px rgba(212, 168, 83, 0.2);
+            border: 1px solid rgba(212, 168, 83, 0.3);
+            background: #000;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -50px;
+            right: 0;
+            background: rgba(212, 168, 83, 0.9);
+            border: none;
+            color: #0a0806;
+            font-size: 24px;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .close-modal:hover {
+            transform: scale(1.1);
+            background: #d4a853;
+        }
+
+        .video-footer {
+            text-align: center;
+            padding: 40px;
+            border-top: 1px solid rgba(212, 168, 83, 0.1);
+            color: rgba(212, 168, 83, 0.5);
+            font-size: 0.8rem;
+        }
+
+        /* Error message */
+        .video-error {
+            display: none;
+            text-align: center;
+            color: #ff6b6b;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255,0,0,0.1);
+            border-radius: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .video-header { padding: 20px 24px; }
+            .hero-section { height: 30vh; }
+            .hero-content h1 { font-size: 1.8rem; }
+            .video-selection { padding: 0 24px; }
+            .section-title { font-size: 1.4rem; }
+            .video-grid { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="golden-bg"></div>
+    <div class="video-header">
+        <a href="#" class="back-btn" onclick="history.back()">← Back to Home</a>
+    </div>
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>SoftKeys Performances</h1>
+            <p>Experience the magic of live music</p>
+        </div>
+    </div>
+
+    <div class="video-selection">
+        <h2 class="section-title"><span>Featured</span> Performances</h2>
+        <div class="video-grid">
+           
+            <!-- Video Card 1 -->
+            <div class="video-card" data-video="assets/video/video.mp4">
+                <div class="video-thumbnail">
+                    <div class="no-thumb"></div>
+                    <div class="play-overlay">
+                        <div class="play-icon"></div>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <div class="video-title">Live Performance</div>
+                    <div class="video-desc">Kariyala Festival event</div>
+                    <span class="duration">Full Performance</span>
+                </div>
+            </div>
+
+            <!-- Video Card 2 -->
+            <div class="video-card" data-video="assets/videos/performance2.mp4">
+                <div class="video-thumbnail">
+                    <div class="no-thumb"></div>
+                    <div class="play-overlay">
+                        <div class="play-icon"></div>
+                    </div>
+                </div>
+                <div class="video-info">
+                    <div class="video-title">Live Performance</div>
+                    <div class="video-desc">Sing to Express not to Empress</div>
+                    <span class="duration">Full Performance</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="video-footer">
+        <p>© 2024 SoftKeys | Where Music Comes Alive</p>
+    </div>
+
+    <div class="video-modal" id="videoModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">✕</button>
+            <video id="mainVideo" controls>
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="video-error" id="videoError">
+                 Cannot play video. The file format may not be supported. Please try a different browser or convert the video to MP4.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const videoCards = document.querySelectorAll('.video-card');
+        const modal = document.getElementById('videoModal');
+        const mainVideo = document.getElementById('mainVideo');
+        const closeModal = document.getElementById('closeModal');
+        const videoError = document.getElementById('videoError');
+
+        videoCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const videoSrc = this.getAttribute('data-video');
+                
+                // Hide error message
+                videoError.style.display = 'none';
+                
+                // Set video source
+                const source = mainVideo.querySelector('source');
+                source.src = videoSrc;
+                
+                // Reload video
+                mainVideo.load();
+                
+                // Show modal
+                modal.classList.add('active');
+                
+                // Try to play
+                const playPromise = mainVideo.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Play error:', error);
+                        // Show error message if video cannot play
+                        if (error.name === 'NotSupportedError') {
+                            videoError.style.display = 'block';
+                        }
+                    });
+                }
+                
+                // Check if video has video track
+                mainVideo.addEventListener('loadedmetadata', function() {
+                    if (mainVideo.videoWidth === 0) {
+                        console.log('Video has no video track - audio only');
+                        videoError.style.display = 'block';
+                        videoError.textContent = '⚠️ This file contains audio only. No video track found.';
+                    }
+                }, { once: true });
+            });
+        });
+
+        function closeVideoModal() {
+            modal.classList.remove('active');
+            mainVideo.pause();
+            mainVideo.currentTime = 0;
+            videoError.style.display = 'none';
+        }
+
+        closeModal.addEventListener('click', closeVideoModal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeVideoModal();
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeVideoModal();
+            }
+        });
+    </script>
+</body>
+</html>

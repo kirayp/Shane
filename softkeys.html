@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SoftKeys | Image Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 30% 20%, #1a1208 0%, #050302 100%);
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Golden overlay effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(212, 168, 83, 0.02) 0px,
+                rgba(212, 168, 83, 0.02) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+            pointer-events: none;
+        }
+
+        /* Back button */
+        .back-btn {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 100;
+            color: #d4a853;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: rgba(212, 168, 83, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 10px 24px;
+            border-radius: 40px;
+            border: 1px solid rgba(212, 168, 83, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: #d4a853;
+            color: #0a0806;
+            border-color: transparent;
+        }
+
+        /* Container */
+        .gallery-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 100px 48px 80px;
+        }
+
+        /* Header */
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .gallery-header h1 {
+            font-size: 2.5rem;
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(135deg, #d4a853 0%, #f5e6b0 50%, #d4a853 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .gallery-header p {
+            color: rgba(212, 168, 83, 0.6);
+            font-size: 0.95rem;
+        }
+
+        .golden-divider {
+            width: 60px;
+            height: 2px;
+            background: #d4a853;
+            margin: 20px auto 0;
+            opacity: 0.5;
+        }
+
+        /* Image Grid - 3 columns */
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        /* Image Card */
+        .image-card {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #0a0806;
+            border: 1px solid rgba(212, 168, 83, 0.2);
+            transition: all 0.4s ease;
+        }
+
+        .image-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(212, 168, 83, 0.6);
+            box-shadow: 0 20px 40px rgba(212, 168, 83, 0.1);
+        }
+
+        /* Image Wrapper */
+        .image-wrapper {
+            position: relative;
+            overflow: hidden;
+            aspect-ratio: 4 / 5;
+        }
+
+        .image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .image-card:hover .image-wrapper img {
+            transform: scale(1.08);
+        }
+
+        /* Overlay */
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+            opacity: 0.6;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 0.3;
+        }
+
+        /* Caption */
+        .image-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 20px;
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .image-caption h3 {
+            color: #d4a853;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .image-caption p {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.8rem;
+        }
+
+        /* Golden accent line */
+        .golden-accent {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 3px;
+            background: #d4a853;
+            transition: width 0.4s ease;
+        }
+
+        .image-card:hover .golden-accent {
+            width: 100%;
+        }
+
+        /* Lightbox Modal (pag-click sa image mo-dako) */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .lightbox.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 16px;
+            border: 1px solid rgba(212, 168, 83, 0.3);
+            box-shadow: 0 0 50px rgba(212, 168, 83, 0.2);
+        }
+
+        .close-lightbox {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            color: #d4a853;
+            font-size: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .close-lightbox:hover {
+            transform: scale(1.1);
+            color: #fff;
+        }
+
+        .lightbox-caption {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #d4a853;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.2rem;
+            background: rgba(0,0,0,0.7);
+            padding: 12px;
+            margin: 0 auto;
+            width: fit-content;
+            border-radius: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .image-grid {
+                gap: 20px;
+            }
+            .gallery-container {
+                padding: 80px 30px 60px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .image-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            .gallery-header h1 {
+                font-size: 1.8rem;
+            }
+            .gallery-container {
+                padding: 80px 24px 60px;
+            }
+            .image-caption h3 {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#" class="back-btn" onclick="history.back()">← Back</a>
+
+    <div class="gallery-container">
+        <div class="gallery-header">
+            <h1>SoftKeys Gallery</h1>
+            <p>Moments captured from our unforgettable performances</p>
+            <div class="golden-divider"></div>
+        </div>
+
+        <div class="image-grid">
+            <!-- Image 1 -->
+            <div class="image-card" data-image="assets/images/none.jpg" data-title="Live Performance" data-desc="Romantic piano set">
+                <div class="image-wrapper">
+                    <img src="none.jpg" alt="Live Performance">
+                    <div class="image-overlay"></div>
+                </div>
+                <div class="image-caption">
+                    <h3>Live Performance</h3>
+                    <p>Romantic piano set</p>
+                </div>
+                <div class="golden-accent"></div>
+            </div>
+
+            <!-- Image 2 -->
+            <div class="image-card" data-image="assets/images/softkeys1.jpg" data-title="Acoustic Set" data-desc="Intimate and soulful">
+                <div class="image-wrapper">
+                    <img src="softkeys1.jpg" alt="Acoustic Set">
+                    <div class="image-overlay"></div>
+                </div>
+                <div class="image-caption">
+                    <h3>Acoustic Set</h3>
+                    <p>Intimate and soulful</p>
+                </div>
+                <div class="golden-accent"></div>
+            </div>
+
+            <!-- Image 3 -->
+            <div class="image-card" data-image="assets/images/softkeys2.jpg" data-title="Special Event" data-desc="Unforgettable celebration">
+                <div class="image-wrapper">
+                    <img src="softkeys2.jpg" alt="Special Event">
+                    <div class="image-overlay"></div>
+                </div>
+                <div class="image-caption">
+                    <h3>Special Event</h3>
+                    <p>Unforgettable celebration</p>
+                </div>
+                <div class="golden-accent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div class="lightbox" id="lightbox">
+        <span class="close-lightbox" id="closeLightbox">&times;</span>
+        <img id="lightboxImg" src="" alt="">
+        <div class="lightbox-caption" id="lightboxCaption"></div>
+    </div>
+
+    <script>
+        // Get elements
+        const imageCards = document.querySelectorAll('.image-card');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxCaption = document.getElementById('lightboxCaption');
+        const closeLightbox = document.getElementById('closeLightbox');
+
+        // Open lightbox when clicking on image card
+        imageCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const imgSrc = this.getAttribute('data-image');
+                const imgTitle = this.getAttribute('data-title');
+                const imgDesc = this.getAttribute('data-desc');
+                
+                lightboxImg.src = imgSrc;
+                lightboxCaption.textContent = `${imgTitle} - ${imgDesc}`;
+                lightbox.classList.add('active');
+            });
+        });
+
+        // Close lightbox
+        function closeLightboxFunc() {
+            lightbox.classList.remove('active');
+        }
+
+        closeLightbox.addEventListener('click', closeLightboxFunc);
+        
+        // Close when clicking outside the image
+        lightbox.addEventListener('click', function(e) {
+            if (e.target === lightbox) {
+                closeLightboxFunc();
+            }
+        });
+
+        // Close with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+                closeLightboxFunc();
+            }
+        });
+    </script>
+</body>
+</html>
